@@ -1,0 +1,10 @@
+program  Example 
+var	x:int;	
+begin		
+read(x)  ;	
+if    (x >= 0) 
+	print(x);
+else     	
+      print(0-x);
+end
+
