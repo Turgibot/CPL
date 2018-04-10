@@ -352,7 +352,10 @@ STMT:ASSIGNMENT_STMT
 
 WRITE_STMT: PRINT '(' EXPRESSION ')' ';' 
 {
+
 	char inst[200];
+	char* regT = getRegisterT();
+	char* regF = getRegisterF();
 	if($3.type==int_)
 		sprintf(inst,"li $v0,1\nmove $a0,$t2\n syscall\n");
 	else if ($3.type==float_)
@@ -746,6 +749,23 @@ todo
 	1	2	3	4		5	6	7		8	9	10	11	
 | LOOP '(' id assignop num toop num STEPOP num ')' STMT_BLOCK 
 { 
+	char *data, *str;
+	char inst1[100];
+	char inst2[100];
+	char inst3[200];
+	
+	sym* s = findSym($3);
+	char* loop=newLabel();
+	char* out=newLabel();
+	if(s.type == int_){
+	
+	
+	
+	}
+	
+	
+	
+	/////////////////////////////////////
 	char* loop=newLabel();
 	char* out=newLabel();
 	char* str,*tmp;
@@ -774,6 +794,60 @@ todo
 	free(str);
 	free(tmp);
 }
+	1	2	  3		4		5	6	7	8	9	  10	11	12		13	
+| _loop '(' _id _assignop _num '.' '.' '.' _num _step _num ')' STMT_BLOCK
+ {
+	char * DATA;
+	char* tmp=(char*)malloc(sizeof(char)*(100));
+	char* tmp2=(char*)malloc(sizeof(char)*(100));
+	char* tmp3=(char*)malloc(sizeof(char)*(200));
+	char* str;
+	symbol* s = findSymInTbl($3);
+	tmp[0]='\0';
+	tmp2[0]='\0';
+	tmp3[0]='\0';
+
+	char* label= getLabel();
+	char* reg0= getRegisterT();
+	char *reg1= getRegisterT();
+	char* reg2= getRegisterT();
+	char* reg3= getRegisterT();
+	
+	if(s != 0)
+	{
+		if(strcmp(s->type,"int")==0)
+		{
+			int start= $5.val.ival;
+			int end= $9.val.ival;
+			int step = $11.val.ival;
+			sprintf(tmp,"\nli %s,%d\nsw %s, %s\nli %s,%d\nli %s,%d\nslt %s,%s,%s\n",reg0,start,reg0,$3,reg1,end,reg2,step,reg3,reg0,reg1);
+			sprintf(tmp2,"\nbeq %s,1,%s\nmul %s,%s,-1\nj Loop%s\n%s:\nadd %s,%s,%s",reg3,label,reg2,reg2,label,label,reg3,reg0,reg2);
+			sprintf(tmp3,"\nLoop%s:\n%s\nadd %s,%s,%s\nsw %s, %s\nbeq %s,%s,End%s\nj Loop%s\nEnd%s:\n",label,$13.body,reg0,reg0,reg2,reg0,$3,reg0,reg1,label,label,label);
+		}
+		else
+		{
+			addError("Can't use float number!!");
+			sprintf(DATA,"");
+		}
+	}
+	else
+	{  
+		addError("Undefined variable");
+		sprintf(DATA,"");
+	}
+	str=charCat(tmp,tmp2);
+	DATA=charCat(str,tmp3);
+	$$.body=strdup(DATA);
+	$$.head= strdup($13.head);
+	freeRegisterT(reg3);
+	freeRegisterT(reg2);
+	freeRegisterT(reg1);
+	freeRegisterT(reg0);
+	free(str); free(tmp); free(tmp2);free(tmp3);
+	free(DATA);
+	free($13.head);free($13.body);
+}
+
 | LOOP {ParsingError("expected '('.");} error ASSIGNMENT_STMT BOOLEXPR STEP ')' STMT
 {
 	free($4.code);
