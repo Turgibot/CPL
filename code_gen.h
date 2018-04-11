@@ -15,11 +15,18 @@ typedef struct _code
 	int type;
 	char* head;
 }Code;
-
-char* StringCat(char* dis, char* source);
+char* getRegister();							 // Returns a available register to be used in the MIPS code
+char* getFPRegister();							 // Returns a available float register to be used in the MIPS code
+char* StringCat(const char* dis, const char* source);
 char* newLabel();
 int labelCount = 0;
 Code numberCode(Number num);
+
+char* registerT[10] = {"$t0","$t1","$t2","$t3","$t4","$t5","$t6","$t7","$t8","$t9",};	// The list of available MIPS registers
+char* registerFP[10] = {"$f0","$f1","$f2","$f3","$f4","$f5","$f6","$f7","$f8","$f9"}; // The list of available MIPS float registers
+int indexT=0;
+int indexF=0;
+
 char* StringCat(const char* first, const char* second)
 {
 	char* str = (char*)malloc(strlen(first) + 1 + strlen(second));
@@ -41,28 +48,45 @@ char* newLabel()
 	return strdup(str);
 }
 
+char* getRegister()
+{
+	char* res;
+	res = registerT[indexT];
+	indexT = (indexT+1)%10;
+
+	return res;
+}
+char* getFPRegister()
+{
+	char* res;
+	res = registerFP[indexF];
+	indexF = (indexF+1)%10;
+	return res;
+}
 /////////////////////////////////////
-//get a number and put his value in t0 if it int,f0 if it float 
+//get a number and put his value in t0 if it int,f0 if it float
 Code numberCode(Number num)
 {
 	Code c;
 	char inst[100];
 	c.head = strdup("");
 	char* label;
+	char* regT = getRegister();
+	char* regF = getFPRegister();
 	if (num.type == int_)
-		sprintf(inst, "li $t0,%d\n", num.val.ival);
+		sprintf(inst, "li %s,%d\n",regT, num.val.ival);
 	else
 	{
 		label = newLabel();
 		sprintf(inst, "%s: .float %f\n", label, num.val.fval);
 		free(c.head); c.head = strdup(inst);
-		sprintf(inst, "l.s $f0,%s\n", label);
+		sprintf(inst, "l.s %s,%s\n",regF, label);
 	}
 	c.code = strdup(inst);
 	c.type = num.type;
 	return c;
 }
-//get an id and put his value in t0 if it int,f0 if it float 
+//get an id and put his value in t0 if it int,f0 if it float
 Code idCode(char* name)
 {
 	Code c;
@@ -70,15 +94,17 @@ Code idCode(char* name)
 	char inst[150];
 	char* str;
 	c.code = strdup("");
+	char* regT = getRegister();
+	char* regF = getFPRegister();
 	if (s != NULL)//check if exist
 	{
 		if (s->haveVal)//check if have a value
 		{
 			str = StringCat("la $s0,", s->label);
 			if (s->type==float_)
-				sprintf(inst, "\nlwc1 $f0,%d($s0)\n", s->index * 4);
+				sprintf(inst, "\nlwc1 %s,%d($s0)\n",regF, s->index * 4);
 			else
-				sprintf(inst, "\nlw $t0,%d($s0)\n", s->index * 4);
+				sprintf(inst, "\nlw %s,%d($s0)\n",regT, s->index * 4);
 			free(c.code);
 			c.code = StringCat(str, inst);
 			free(str);
@@ -101,14 +127,11 @@ Code idCode(char* name)
 	return c;
 }
 //move value from source to dis
-Code moveCode(Code c,int source,int dis)
+Code moveCode(Code c,char* source,char* dest)
 {
 	Code c1;
 	char str[100];
-	if (c.type==float_)
-		sprintf(str,"mov.s $f%d,$f%d\n",dis,source);
-	else
-		sprintf(str,"move $t%d,$t%d\n", dis, source);
+	sprintf(str,"mov.s %s,%s\n",dest,source);
 	c1.code = StringCat(c.code, str);
 	c1.type = c.type;
 	free(c.code);

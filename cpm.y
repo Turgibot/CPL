@@ -35,27 +35,27 @@ char *myout;
 	}num;
 
 	char sign1;
-	char sign2 [3];	
-	char sign3 [4];	
+	char sign2 [3];
+	char sign3 [4];
 	char *strVal;
 }
 
 %token <num> num// type int or float
 %token <sign1> addop mulop
-%token <sign2> orop andop assignop relop 
+%token <sign2> orop andop assignop relop
 %token <sign3> toop
 %token <strVal> sentence id
-%token CASE CONST DEFAULT READ ELSE FOR IF STEPOP INT PROGRAM LOOP PRINT _BEGIN STRING FLOAT SWITCH END VAR WHILE WHEN BREAK  
+%token CASE CONST DEFAULT READ ELSE FOR IF STEPOP INT PROGRAM LOOP PRINT _BEGIN STRING FLOAT SWITCH END VAR WHILE WHEN BREAK
 %start PROGRAM_BLOCK
 %type <Ptree> FACTOR DECLARATIONS TERM EXPRESSION CHOICE CASES STEP SWITCH_ROLL READ_STMT BOOLFACTOR BOOLTERM BOOLEXPR STMTLIST STMT ASSIGNMENT_STMT CONTROL_STMT WRITE_STMT STMT_BLOCK
 %type <Dtree> PROGRAM_BLOCK TYPE DECL DECLARLIST CDECL
 
 %%
-PROGRAM_BLOCK : PROGRAM id DECLARATIONS _BEGIN STMTLIST END 
+PROGRAM_BLOCK : PROGRAM id DECLARATIONS _BEGIN STMTLIST END
 {
 	FILE* file;
 	char names[] = "Guy Tordjman and Shimon Genish";
-	
+
 	freeAllSymbol();
 	if(eCount==1)
 	{
@@ -76,13 +76,13 @@ PROGRAM_BLOCK : PROGRAM id DECLARATIONS _BEGIN STMTLIST END
 	free($5.code);
 };
 
-DECLARATIONS: VAR DECLARLIST CDECL 
+DECLARATIONS: VAR DECLARLIST CDECL
 {
 	$$.code=StringCat($2.code,$3.code);
 	free($2.code);
 	free($3.code);
 }
-| 
+|
 {
 	$$.code=strdup("");
 };
@@ -100,20 +100,20 @@ DECLARLIST: DECLARLIST id DECL
 	if(s==NULL)
 	{
 		add2Sym($2,$3.type,$3.count,$3.label,0);
-		sprintf(inst,"%s : .space %d\n",$3.label,($3.count+1)*4);												
+		sprintf(inst,"%s : .space %d\n",$3.label,($3.count+1)*4);
 	}
 	else
 	{
 		s->used=0;
 		sprintf(inst,"'%s' is already defined.", $2);
-		SemanticError(inst);	
+		SemanticError(inst);
 		sprintf(inst,"%s : .space %d\n",$3.label,($3.count)*4);
 	}
 	$$.code = StringCat($1.code,inst);
 	free($1.code);
 	free($3.label);
-} 
-| id DECL 
+}
+| id DECL
 {
 	sym* s=findSym($1);
 	char inst[100];
@@ -129,12 +129,12 @@ DECLARLIST: DECLARLIST id DECL
 	{
 		s->used=0;
 		sprintf(inst,"'%s' is already defined.", $1);
-		SemanticError(inst);	
+		SemanticError(inst);
 		sprintf(inst,"%s : .space %d\n",$2.label,($2.count)*4);
 		$$.code = strdup(inst);
 		free($2.label);
 	}
-}; 
+};
 
 /*--------------------------------------------------------------------------------------------*/
 
@@ -143,7 +143,7 @@ DECLARLIST: DECLARLIST id DECL
 	1. var is already defined.
 	2. there is a syntax, paring or semantic error.
 */
-DECL : ',' id DECL 
+DECL : ',' id DECL
 {
 	sym* s=findSym($2);
 	char inst[100];
@@ -161,25 +161,25 @@ DECL : ',' id DECL
 		$$.count=$3.count;
 		$$.type=$3.type;
 		sprintf(inst,"%s is already defined", $2);
-		SemanticError(inst);	
+		SemanticError(inst);
 	}
 }
-| ':' TYPE ';' 
+| ':' TYPE ';'
 {
 	$$.type=$2.type;
 	$$.count=0;
-	$$.label=$2.label
+	$$.label=$2.label;
 }
-| {ParsingError("expected ':'.");} error ';' 
+| {ParsingError("expected ':'.");} error ';'
 {
 	$$.type=strdup("");
 	$$.count=0;
-	$$.label=strdup("")
-}; 
+	$$.label=strdup("");
+};
 
 /*--------------------------------------------------------------------------------------------*/
- 
-TYPE : INT 
+
+TYPE : INT
 {
 	$$.label = newLabel();
 	$$.type = int_;
@@ -195,18 +195,18 @@ TYPE : INT
 	$$.label = newLabel();
 	$$.type = string;
 	$$.count = 0;
-} 
-| { ParsingError("type is incorrect");} error 
+}
+| { ParsingError("type is incorrect");} error
 {
 	$$.label = strdup("");
 	$$.type = -1;
 	$$.count = 0;
-}; 
+};
 
 /*--------------------------------------------------------------------------------------------*/
 
 CDECL:  CONST TYPE id assignop num ';' CDECL
-{ 
+{
 	sym* s;
 	char inst[100];
 	$$.code=strdup("");
@@ -215,7 +215,7 @@ CDECL:  CONST TYPE id assignop num ';' CDECL
 		s=findSym($3);
 		if(s==NULL)//check if it already exist
 		{
-			//if exist in sym table			
+			//if exist in sym table
 			if($5.type==int_ && $2.type==int_)
 			{
 				sprintf(inst,"%s : .word %d\n",$2.label,$5.val.ival);
@@ -260,14 +260,14 @@ CDECL:  CONST TYPE id assignop num ';' CDECL
 {
 	$$.code=strdup("");
 }
-| 
+|
 {
 	$$.code =strdup("");
 };
 
 /*--------------------------------------------------------------------------------------------*/
 
-STMTLIST: STMTLIST STMT 
+STMTLIST: STMTLIST STMT
 {
 	$$.code=StringCat($1.code,$2.code);
 	$$.head=StringCat($1.head,$2.head);
@@ -276,7 +276,7 @@ STMTLIST: STMTLIST STMT
 	free($2.head);
 	free($2.code);
 }
-| 
+|
 {
 $$.code=strdup("");
 $$.head=strdup("");
@@ -284,12 +284,12 @@ $$.head=strdup("");
 
 /*--------------------------------------------------------------------------------------------*/
 
-STMT:ASSIGNMENT_STMT 
+STMT:ASSIGNMENT_STMT
 {
 	$$.code = $1.code;
 	$$.head=$1.head;
 }
-| id assignop sentence ';' 
+| id assignop sentence ';'
 {
 	sym* s=findSym($1);
 	char inst[200];
@@ -313,7 +313,7 @@ STMT:ASSIGNMENT_STMT
 		{
 			sprintf(inst,"%s is a number, can't assign string in it",$1);
 			SemanticError(inst);
-			
+
 		}
 	}
 }
@@ -327,22 +327,22 @@ STMT:ASSIGNMENT_STMT
 	$$.head=strdup("");
 	$$.code=strdup("");
 }
-| CONTROL_STMT 
+| CONTROL_STMT
 {
 	$$.code = $1.code;
 	$$.head=$1.head;
 }
-| READ_STMT 
+| READ_STMT
 {
 	$$.code = $1.code;
 	$$.head=$1.head;
 }
-| WRITE_STMT 
+| WRITE_STMT
 {
 	$$.code = $1.code;
 	$$.head=$1.head;
 }
-| STMT_BLOCK 
+| STMT_BLOCK
 {
 	$$.code = $1.code;
 	$$.head=$1.head;
@@ -350,7 +350,7 @@ STMT:ASSIGNMENT_STMT
 
 /*--------------------------------------------------------------------------------------------*/
 
-WRITE_STMT: PRINT '(' EXPRESSION ')' ';' 
+WRITE_STMT: PRINT '(' EXPRESSION ')' ';'
 {
 
 	char inst[200];
@@ -381,7 +381,7 @@ WRITE_STMT: PRINT '(' EXPRESSION ')' ';'
 	$$.code = strdup("");
 	$$.head=strdup("");
 }
-| PRINT '(' sentence ')' ';' 
+| PRINT '(' sentence ')' ';'
 {
 	char inst[200];
 	char* label = newLabel();
@@ -411,13 +411,13 @@ READ_STMT: READ '(' id ')' ';'
 			else
 			{
 				sprintf(inst,"'%s' is string type, can't read string from user!",$3);
-				SemanticError(inst);	
+				SemanticError(inst);
 			}
 		}
 		else
 		{
 			sprintf(inst,"'%s' is constant variable, can't change his value!",$3);
-			SemanticError(inst);	
+			SemanticError(inst);
 		}
 		if(x)
 		{
@@ -480,7 +480,7 @@ ASSIGNMENT_STMT: id assignop EXPRESSION ';'
 			{
 				str= StringCat("la $s0,",s->label);
 				if(s->type==float_)
-					sprintf(inst,"\nswc1 $f2,%d($s0)\n",s->index*4);	
+					sprintf(inst,"\nswc1 $f2,%d($s0)\n",s->index*4);
 				else
 					sprintf(inst,"\nsw $t2,%d($s0)\n",s->index*4);
 				tmp = StringCat(str,inst);
@@ -490,7 +490,7 @@ ASSIGNMENT_STMT: id assignop EXPRESSION ';'
 			}
 			else if (s->type==float_) //first id float, second id int
 			{
-				str= StringCat("la $s0,",s->label);		
+				str= StringCat("la $s0,",s->label);
 				sprintf(inst,"\nmtc1 $t2, $f2\ncvt.s.w $f2, $f2\nswc1 $f2,%d($s0)\n",s->index*4);
 				tmp = StringCat(str,inst);
 				$$.code=StringCat($3.code,tmp);
@@ -500,13 +500,13 @@ ASSIGNMENT_STMT: id assignop EXPRESSION ';'
 			else if(s->type==int_ && $3.type==float_)
 			{
 				sprintf(inst,"cannot assign (float) to identifier '%s'(int).", s->name);
-				SemanticError(inst);	
+				SemanticError(inst);
 				$$.code=StringCat($3.code,"");
 			}
 			else
 			{
 				sprintf(inst,"cannot assign to identifier '%s', types are not match.", s->name);
-				SemanticError(inst);	
+				SemanticError(inst);
 				$$.code=StringCat($3.code,"");
 			}
 		}
@@ -519,7 +519,7 @@ ASSIGNMENT_STMT: id assignop EXPRESSION ';'
 	else
 	{
 		sprintf(inst,"\nSemantic Error: identifier '%s' is undefined.", $1);
-		yyerror(inst);	
+		yyerror(inst);
 		$$.code=StringCat($3.code,"");
 	}
 	free($3.code);
@@ -537,11 +537,11 @@ ASSIGNMENT_STMT: id assignop EXPRESSION ';'
 
 /*--------------------------------------------------------------------------------------------*/
 
-CONTROL_STMT: IF '(' BOOLEXPR ')' STMT ELSE STMT 
+CONTROL_STMT: IF '(' BOOLEXPR ')' STMT ELSE STMT
 {
 	char *str,*tmp;
 	char* labelFalse=newLabel();
-	char* labelOut=newLabel();		
+	char* labelOut=newLabel();
 	char inst[100];
 	sprintf(inst,"beq $t1,$0,%s\n",labelFalse);
 	str=StringCat(inst,$5.code);
@@ -568,7 +568,7 @@ CONTROL_STMT: IF '(' BOOLEXPR ')' STMT ELSE STMT
 	free(labelFalse);
 	free(labelOut);
 }
-|  IF {ParsingError("expected '('.");} error ')' STMT ELSE STMT 
+|  IF {ParsingError("expected '('.");} error ')' STMT ELSE STMT
 {
 	$$.code=strdup("");
 	$$.head=strdup("");
@@ -577,7 +577,7 @@ CONTROL_STMT: IF '(' BOOLEXPR ')' STMT ELSE STMT
 	free($5.head);
 	free($7.head);
 }
-|  IF '('  error {ParsingError("IF statment expected an boolean expression.");} ')' STMT ELSE STMT 
+|  IF '('  error {ParsingError("IF statment expected an boolean expression.");} ')' STMT ELSE STMT
 {
 	$$.code=strdup("");
 	$$.head=strdup("");
@@ -586,7 +586,7 @@ CONTROL_STMT: IF '(' BOOLEXPR ')' STMT ELSE STMT
 	free($8.code);
 	free($8.head);
 }
-|  IF '(' BOOLEXPR {ParsingError("expected ')'.");} error STMT ELSE STMT 
+|  IF '(' BOOLEXPR {ParsingError("expected ')'.");} error STMT ELSE STMT
 {
 	$$.code=strdup("");
 	$$.head=strdup("");
@@ -597,14 +597,14 @@ CONTROL_STMT: IF '(' BOOLEXPR ')' STMT ELSE STMT
 	free($3.code);
 	free($3.head);
 }
-|  IF '(' BOOLEXPR ')' {ParsingError("IF statement expected statement.");} error 
+|  IF '(' BOOLEXPR ')' {ParsingError("IF statement expected statement.");} error
 {
 	$$.code=strdup("");
 	$$.head=strdup("");
 	free($3.code);
 	free($3.head);
 }
-| WHILE '(' BOOLEXPR ')' STMT_BLOCK 
+| WHILE '(' BOOLEXPR ')' STMT_BLOCK
 {
 	char* loop=newLabel();
 	char* out=newLabel();
@@ -626,7 +626,7 @@ CONTROL_STMT: IF '(' BOOLEXPR ')' STMT ELSE STMT
 	free($3.head);
 	free($5.head);
 }
-| WHILE {ParsingError("expected '('.");} error BOOLEXPR ')' STMT_BLOCK 
+| WHILE {ParsingError("expected '('.");} error BOOLEXPR ')' STMT_BLOCK
 {
 	$$.code=strdup("");
 	$$.head=strdup("");
@@ -635,14 +635,14 @@ CONTROL_STMT: IF '(' BOOLEXPR ')' STMT ELSE STMT
 	free($6.head);
 	free($6.code);
 }
-| WHILE '(' error {ParsingError("WHILE statment expected an boolean expression.");} ')' STMT_BLOCK 
+| WHILE '(' error {ParsingError("WHILE statment expected an boolean expression.");} ')' STMT_BLOCK
 {
 	$$.code=strdup("");
 	$$.head=strdup("");
 	free($6.head);
 	free($6.code);
-} 
-| WHILE '(' BOOLEXPR {ParsingError("expected ')'.");} error STMT_BLOCK 
+}
+| WHILE '(' BOOLEXPR {ParsingError("expected ')'.");} error STMT_BLOCK
 {
 	$$.code=strdup("");
 	$$.head=strdup("");
@@ -650,7 +650,7 @@ CONTROL_STMT: IF '(' BOOLEXPR ')' STMT ELSE STMT
 	free($3.code);
 	free($6.head);
 	free($6.code);
-}	
+}
 | FOR '(' ASSIGNMENT_STMT ';' BOOLEXPR ';' STEP ')' STMT
 {
 	char* loop=newLabel();
@@ -718,7 +718,7 @@ CONTROL_STMT: IF '(' BOOLEXPR ')' STMT ELSE STMT
 	free($10.head);
 	$$.code=strdup("");
 	$$.head=strdup("");
-}	
+}
 | FOR '(' ASSIGNMENT_STMT ';' BOOLEXPR ';' STEP {ParsingError("expected ')'.");} error STMT
 {
 	free($3.code);
@@ -732,149 +732,67 @@ CONTROL_STMT: IF '(' BOOLEXPR ')' STMT ELSE STMT
 	$$.code=strdup("");
 	$$.head=strdup("");
 }
-todo
-1. take free register and inster first num
-2. check condition 
-3. run statement block 
-4. run STEP
-5. jump back to check
-
-
-1. load symbol of id
-2. initialize(store) the first num
-3. loop label : condition: a. if $5 > $7 than check that id <= $7 ---> otherwise ----> go to out
-4. STMT_BLOCK
-5. step : update num
- 
-	1	2	3	4		5	6	7		8	9	10	11	
-| LOOP '(' id assignop num toop num STEPOP num ')' STMT_BLOCK 
-{ 
+| LOOP '(' id assignop num toop num STEPOP num ')' STMT_BLOCK
+{
 	char *data, *str;
 	char inst1[100];
 	char inst2[100];
 	char inst3[200];
-	
+	char* t0= getRegister();
+	char *t1= getRegister();
+	char* t2= getRegister();
+	char* t3= getRegister();
+	char* label=newLabel();
+	char* loopLbl=newLabel();
+	char* outLbl=newLabel();
+
 	sym* s = findSym($3);
-	char* loop=newLabel();
-	char* out=newLabel();
-	if(s.type == int_){
-	
-	
-	
-	}
-	
-	
-	
-	/////////////////////////////////////
-	char* loop=newLabel();
-	char* out=newLabel();
-	char* str,*tmp;
-	char inst[100];
-	
-	sprintf(inst,"beq $t1,$0,%s\n",out);
-	str=StringCat($4.code,inst);free($4.code);
-	sprintf(inst,"%s: ",loop);
-	tmp=StringCat(inst,str);free(str);
-	str=StringCat(tmp,$7.code);
-	free(tmp);
-	free($7.code);
-	tmp=StringCat(str,$5.code);free($5.code);free(str);
-	sprintf(inst,"j %s\n%s: \n",loop,out);
-	str=StringCat(tmp,inst);free(tmp);
-	$$.code=StringCat($3.code,str);
-	free(str);
-	free($3.code);
-	str=StringCat($3.head,$4.head);
-	free($3.head);
-	free($4.head);
-	tmp=StringCat($5.head,$7.head);
-	free($5.head);
-	free($7.head);
-	$$.head=StringCat(str,tmp);
-	free(str);
-	free(tmp);
-}
-	1	2	  3		4		5	6	7	8	9	  10	11	12		13	
-| _loop '(' _id _assignop _num '.' '.' '.' _num _step _num ')' STMT_BLOCK
- {
-	char * DATA;
-	char* tmp=(char*)malloc(sizeof(char)*(100));
-	char* tmp2=(char*)malloc(sizeof(char)*(100));
-	char* tmp3=(char*)malloc(sizeof(char)*(200));
-	char* str;
-	symbol* s = findSymInTbl($3);
-	tmp[0]='\0';
-	tmp2[0]='\0';
-	tmp3[0]='\0';
-
-	char* label= getLabel();
-	char* reg0= getRegisterT();
-	char *reg1= getRegisterT();
-	char* reg2= getRegisterT();
-	char* reg3= getRegisterT();
-	
-	if(s != 0)
-	{
-		if(strcmp(s->type,"int")==0)
-		{
-			int start= $5.val.ival;
-			int end= $9.val.ival;
-			int step = $11.val.ival;
-			sprintf(tmp,"\nli %s,%d\nsw %s, %s\nli %s,%d\nli %s,%d\nslt %s,%s,%s\n",reg0,start,reg0,$3,reg1,end,reg2,step,reg3,reg0,reg1);
-			sprintf(tmp2,"\nbeq %s,1,%s\nmul %s,%s,-1\nj Loop%s\n%s:\nadd %s,%s,%s",reg3,label,reg2,reg2,label,label,reg3,reg0,reg2);
-			sprintf(tmp3,"\nLoop%s:\n%s\nadd %s,%s,%s\nsw %s, %s\nbeq %s,%s,End%s\nj Loop%s\nEnd%s:\n",label,$13.body,reg0,reg0,reg2,reg0,$3,reg0,reg1,label,label,label);
+	if(s != NULL){
+		if(s->type == int_){
+			int sval= $5.val.ival;
+			int end_val= $7.val.ival;
+			int step_val = $9.val.ival;
+			sprintf(inst1,"\nli %s,%d\nsw %s, %s\nli %s,%d\nli %s,%d\nslt %s,%s,%s\n",t0,sval,t0,$3,t1,end_val,t2,step_val,t3,t0,t1);
+			sprintf(inst2,"\nbeq %s,1,%s\nmul %s,%s,-1\nj %s\n%s:\nadd %s,%s,%s",t3,label,t2,t2,loopLbl,label,t3,t0,t2);
+			sprintf(inst2,"\n%s:\n%s\nadd %s,%s,%s\nsw %s, %s\nbeq %s,%s,%s\nj %s\n%s:\n",loopLbl,$11.code,t0,t0,t2,t0,$3,t0,t1,outLbl,loopLbl,outLbl);
 		}
-		else
-		{
-			addError("Can't use float number!!");
-			sprintf(DATA,"");
+		else{
+
 		}
 	}
-	else
-	{  
-		addError("Undefined variable");
-		sprintf(DATA,"");
+	else{
 	}
-	str=charCat(tmp,tmp2);
-	DATA=charCat(str,tmp3);
-	$$.body=strdup(DATA);
-	$$.head= strdup($13.head);
-	freeRegisterT(reg3);
-	freeRegisterT(reg2);
-	freeRegisterT(reg1);
-	freeRegisterT(reg0);
-	free(str); free(tmp); free(tmp2);free(tmp3);
-	free(DATA);
-	free($13.head);free($13.body);
+	str = StringCat(inst1,inst2);
+	data = StringCat(str,inst3);
+	$$.code = strdup(data);
+	$$.head = strdup($11.head);
+	free($11.head);
+	free($11.code);
+	free(label);
+	free(loopLbl);
+	free(outLbl);
+	free(str);
+	free(data);
 }
-
-| LOOP {ParsingError("expected '('.");} error ASSIGNMENT_STMT BOOLEXPR STEP ')' STMT
+| LOOP {ParsingError("expected '('.");} error id assignop num toop num STEPOP num ')' STMT_BLOCK
 {
 	free($4.code);
-	free($5.code);
-	free($6.code);
-	free($8.code);
+	free($12.code);
 	free($4.head);
-	free($5.head);
-	free($6.head);
-	free($8.head);
+	free($12.head);
 	$$.code=strdup("");
 	$$.head=strdup("");
 }
-| LOOP '(' ASSIGNMENT_STMT BOOLEXPR STEP {ParsingError("expected ')'.");} error STMT
+| LOOP '(' id assignop num toop num STEPOP num {ParsingError("expected ')'.");} error STMT_BLOCK
 {
 	free($3.code);
-	free($4.code);
-	free($5.code);
-	free($8.code);
+	free($12.code);
 	free($3.head);
-	free($4.head);
-	free($5.head);
-	free($8.head);
+	free($12.head);
 	$$.code=strdup("");
 	$$.head=strdup("");
 }
-| SWITCH_ROLL 
+| SWITCH_ROLL
 {
 	$$.code=$1.code;
 	$$.head=$1.head;
@@ -882,13 +800,13 @@ todo
 
 /*--------------------------------------------------------------------------------------------*/
 
-STMT_BLOCK: '{' STMTLIST '}' 
+STMT_BLOCK: '{' STMTLIST '}'
 {
 	$$.code =$2.code;
 	$$.head=$2.head;
 }
  //thats make 1 shift reduce!!
-| {ParsingError("expected '{'.");} error STMTLIST '}' 
+| {ParsingError("expected '{'.");} error STMTLIST '}'
 {
 	free($3.code);
 	free($3.head);
@@ -906,7 +824,7 @@ STMT_BLOCK: '{' STMTLIST '}'
 
 /*--------------------------------------------------------------------------------------------*/
 
-SWITCH_ROLL: SWITCH '(' CHOICE ')' '{' CASES '}' 
+SWITCH_ROLL: SWITCH '(' CHOICE ')' '{' CASES '}'
 {
 	$$.code=StringCat($3.code,$6.code);
 	free($3.code);
@@ -916,7 +834,7 @@ SWITCH_ROLL: SWITCH '(' CHOICE ')' '{' CASES '}'
 	free($6.head);
 	free($6.label);
 }
-| SWITCH {ParsingError("expected '('.");} error  CHOICE ')' '{' CASES '}' 
+| SWITCH {ParsingError("expected '('.");} error  CHOICE ')' '{' CASES '}'
 {
 	free($4.code);
 	free($7.code);
@@ -925,7 +843,7 @@ SWITCH_ROLL: SWITCH '(' CHOICE ')' '{' CASES '}'
 	$$.code = strdup("");
 	$$.head = strdup("");
 }
-| SWITCH '(' CHOICE {ParsingError("expected ')'.");} error  '{' CASES '}' 
+| SWITCH '(' CHOICE {ParsingError("expected ')'.");} error  '{' CASES '}'
 {
 	free($3.code);
 	free($7.code);
@@ -934,7 +852,7 @@ SWITCH_ROLL: SWITCH '(' CHOICE ')' '{' CASES '}'
 	$$.code = strdup("");
 	$$.head = strdup("");
 }
-| SWITCH '(' CHOICE ')' {ParsingError("expected '{'.");}  error CASES '}' 
+| SWITCH '(' CHOICE ')' {ParsingError("expected '{'.");}  error CASES '}'
 {
 	free($3.code);
 	free($7.code);
@@ -947,8 +865,8 @@ SWITCH_ROLL: SWITCH '(' CHOICE ')' '{' CASES '}'
 
 /*--------------------------------------------------------------------------------------------*/
 
-CHOICE: id 
-{	
+CHOICE: id
+{
 	sym* s = findSym($1);
 	char inst[150];
 	sprintf(inst,"");
@@ -967,8 +885,8 @@ CHOICE: id
 			SemanticError(inst);
 			sprintf(inst,"");
 		}
-		
-		
+
+
 	}
 	else
 	{
@@ -980,7 +898,7 @@ CHOICE: id
 	$$.code=strdup(inst);
 	$$.head=strdup("");
 }
-| num 
+| num
 {
 	char inst[100];
 	if($1.type==int_)
@@ -1003,8 +921,8 @@ CHOICE: id
 
 /*--------------------------------------------------------------------------------------------*/
 
-CASES: CASE num ':' STMTLIST BREAK ';' CASES 
-{ 
+CASES: CASE num ':' STMTLIST BREAK ';' CASES
+{
 	char* str,*tmp;
 	char inst[100];
 	char* next=newLabel();
@@ -1031,7 +949,7 @@ CASES: CASE num ':' STMTLIST BREAK ';' CASES
 	free($4.head);
 	free($7.head);
 }
-| CASE error {ParsingError("expected num.");} ':' STMTLIST BREAK ';' CASES 
+| CASE error {ParsingError("expected num.");} ':' STMTLIST BREAK ';' CASES
 {
 	free($5.code);
 	free($8.code);
@@ -1041,7 +959,7 @@ CASES: CASE num ':' STMTLIST BREAK ';' CASES
 	$$.head = strdup("");
 	$$.label=strdup("");
 }
-| CASE num error {ParsingError("expected ':'.");} STMTLIST BREAK ';' CASES 
+| CASE num error {ParsingError("expected ':'.");} STMTLIST BREAK ';' CASES
 {
 	free($5.code);
 	free($8.code);
@@ -1051,7 +969,7 @@ CASES: CASE num ':' STMTLIST BREAK ';' CASES
 	$$.head = strdup("");
 	$$.label=strdup("");
 }
-| CASE num ':' STMTLIST error {ParsingError("expected 'break'.");} ';' CASES 
+| CASE num ':' STMTLIST error {ParsingError("expected 'break'.");} ';' CASES
 {
 	free($4.code);
 	free($8.code);
@@ -1061,7 +979,7 @@ CASES: CASE num ':' STMTLIST BREAK ';' CASES
 	$$.head = strdup("");
 	$$.label=strdup("");
 }
-| CASE num ':' STMTLIST BREAK error {ParsingError("expected ';'.");} CASES 
+| CASE num ':' STMTLIST BREAK error {ParsingError("expected ';'.");} CASES
 {
 	free($4.code);
 	free($8.code);
@@ -1071,7 +989,7 @@ CASES: CASE num ':' STMTLIST BREAK ';' CASES
 	$$.head = strdup("");
 	$$.label=strdup("");
 }
-| DEFAULT ':' STMTLIST 
+| DEFAULT ':' STMTLIST
 {
 	char* out=newLabel();
 	char* str=StringCat($3.code,out);
@@ -1081,7 +999,7 @@ CASES: CASE num ':' STMTLIST BREAK ';' CASES
 	$$.label=out;
 	$$.head=$3.head;
 }
-| DEFAULT error {ParsingError("expected ':'.");} STMTLIST 
+| DEFAULT error {ParsingError("expected ':'.");} STMTLIST
 {
 	free($4.code);
 	free($4.head);
@@ -1100,7 +1018,7 @@ CASES: CASE num ':' STMTLIST BREAK ';' CASES
 /*--------------------------------------------------------------------------------------------*/
 //here we have all the check that we had in the expression and assignment
 
-STEP: id assignop id addop num 
+STEP: id assignop id addop num
 {
 	sym* s1=findSym($1);
 	sym* s2=findSym($3);
@@ -1122,19 +1040,19 @@ STEP: id assignop id addop num
 						if(s1->type!=string)
 						{
 							 label=newLabel();
-							 
+
 							 sprintf(inst,"la $s0,%s\n",s2->label);
 							 if($5.type==float_)
 							 {
 							 	sprintf(inst,"%s: .float %f\n",label,$5.val.fval);
 							 	free($$.head);$$.head=strdup(inst);
 							 	sprintf(inst,"l.s $f0,%s\n",label);
-								
+
 							 }
 							 else
 							 {
 							 	sprintf(inst,"li $t0,%d\n",$5.val.ival);
-								
+
 							 }
 							 $$.type=float_;
 							 str=strdup(inst);
@@ -1192,7 +1110,7 @@ STEP: id assignop id addop num
 								}
 								else
 									SemanticError("Can't assign float expretion in int value");
-								
+
 							}
 							free(tmp);
 						}
@@ -1240,7 +1158,7 @@ STEP: id assignop id addop num
 /* $t1 has 1 of the bool expr is true else 0
  if the left side is false continue to the right side else return false
  didnt execute the right side if the left side is true */
-BOOLEXPR: BOOLEXPR orop BOOLTERM 
+BOOLEXPR: BOOLEXPR orop BOOLTERM
 {
 	char inst[200];
 	char* labelTrue=newLabel();
@@ -1263,10 +1181,12 @@ BOOLEXPR: BOOLEXPR orop BOOLTERM
 	$$.head=StringCat($1.head,$3.head);
 	free($3.head);
 }
-| BOOLTERM 
+| BOOLTERM
 {
 	Code c={$1.code,int_,$1.head};
-	c = moveCode(c,2,1);
+	char* t1 = getRegister();
+	char* t2 = getRegister();
+	c = moveCode(c,t2,t1);
 	$$.code=c.code;
 	$$.type=c.type;
 	$$.head=c.head;
@@ -1276,7 +1196,7 @@ BOOLEXPR: BOOLEXPR orop BOOLTERM
 /* $t2 has 1 of the bool expr is true else 0
  if the left side is true continue to the right side else return false
  didnt execute the right side if the left side is false */
-BOOLTERM: BOOLTERM andop BOOLFACTOR 
+BOOLTERM: BOOLTERM andop BOOLFACTOR
 {
 	char inst[200];
 	char* labelFalse=newLabel();
@@ -1301,10 +1221,12 @@ BOOLTERM: BOOLTERM andop BOOLFACTOR
 	$$.head=StringCat($1.head,$3.head);
 	free($3.head);
 }
-|BOOLFACTOR 
+|BOOLFACTOR
 {
 	Code c={$1.code,int_,$1.head};
-	c = moveCode(c,3,2);
+	char* t1 = getRegister();
+	char* t2 = getRegister();
+	c = moveCode(c,t2,t1);
 	$$.code=c.code;
 	$$.type=c.type;
 	$$.head=c.head;
@@ -1319,7 +1241,7 @@ BOOLFACTOR:  '!' '(' BOOLFACTOR ')'
 	$$.head=$3.head;
 }
 
-|EXPRESSION  relop  EXPRESSION  
+|EXPRESSION  relop  EXPRESSION
 {
 	//add string case and float case
 	char* str,*tmp;
@@ -1363,7 +1285,7 @@ BOOLFACTOR:  '!' '(' BOOLFACTOR ')'
 			free(str);
 			str=StringCat(tmp,$3.code);
 			free(tmp);
-			//t3 has the value of $1, t2 has the value of $3	
+			//t3 has the value of $1, t2 has the value of $3
 			if(strcmp($2,"==")==0)
 				tmp=StringCat("beq $t3,$t2,",labelTrue);
 			else if(strcmp($2,"!=")==0)
@@ -1437,7 +1359,7 @@ BOOLFACTOR:  '!' '(' BOOLFACTOR ')'
 /*--------------------------------------------------------------------------------------------*/
 /*
 	expression will be in reg num 2,t2 in case of int,f2 incase of float
-	we add reg #2 + reg #2, and put in reg #2 
+	we add reg #2 + reg #2, and put in reg #2
 */
 EXPRESSION: EXPRESSION  addop  TERM
 {
@@ -1465,10 +1387,10 @@ EXPRESSION: EXPRESSION  addop  TERM
 		else
 			str=strdup("mtc1 $t1, $f1\ncvt.s.w $f1, $f1\nsub.s $f2,$f2,$f1\n");
 		$$.type=$1.type;
-		
+
 	}
 	else if($1.type==int_ && $3.type==float_)
-	{ 
+	{
 		if($2 =='+')
 			str=strdup("mtc1 $t2, $f2\ncvt.s.w $f2, $f2\nadd.s $f2,$f2,$f1\n");
 		else
@@ -1491,10 +1413,19 @@ EXPRESSION: EXPRESSION  addop  TERM
 	free($1.head);
 	free($3.head);
 }
-| TERM 
+| TERM
 {
 	Code c={$1.code,$1.type,$1.head};
-	c= moveCode(c,1,2);
+	if($1.type==int_){
+		char* t1 = getRegister();
+		char* t2 = getRegister();
+		c = moveCode(c,t2,t1);
+	}else
+	if($1.type==float_){
+		char* f1 = getFPRegister();
+		char* f2 = getFPRegister();
+		c = moveCode(c,t2,t1);
+	}
 	$$.code=c.code;
 	$$.type=c.type;
 	$$.head=c.head;
@@ -1503,9 +1434,9 @@ EXPRESSION: EXPRESSION  addop  TERM
 /*--------------------------------------------------------------------------------------------*/
 /*
 	term will be in reg num 1,t1 in case of int,f1 in case of float
-	we mul reg #1 * reg #0, and put in reg #1 
+	we mul reg #1 * reg #0, and put in reg #1
 */
-TERM: TERM mulop FACTOR 
+TERM: TERM mulop FACTOR
 {
 	char* str,*tmp;
 	if($1.type==int_ && $3.type==int_ )
@@ -1555,11 +1486,20 @@ TERM: TERM mulop FACTOR
 	$$.head=StringCat($1.head,$3.head);
 	free($1.head);
 	free($3.head);
-}  
-| FACTOR 
+}
+| FACTOR
 {
 	Code c={$1.code,$1.type,$1.head};
-	c = moveCode(c,0,1);
+	if($1.type==int_){
+		char* t1 = getRegister();
+		char* t2 = getRegister();
+		c = moveCode(c,t2,t1);
+	}else
+	if($1.type==float_){
+		char* f1 = getFPRegister();
+		char* f2 = getFPRegister();
+		c = moveCode(c,t2,t1);
+	}
 	$$.code=c.code;
 	$$.type=c.type;
 	$$.head=c.head;
@@ -1570,26 +1510,35 @@ TERM: TERM mulop FACTOR
 	factor will be in reg num 0; t0 in case of int and string, f0 in case of float
 */
 FACTOR: '(' EXPRESSION ')'
-{	
+{
 	Code c={$2.code,$2.type,$2.head};
-	c = moveCode(c,2,0);
+	if($2.type==int_){
+		char* t1 = getRegister();
+		char* t2 = getRegister();
+		c = moveCode(c,t2,t1);
+	}else
+	if($2.type==float_){
+		char* f1 = getFPRegister();
+		char* f2 = getFPRegister();
+		c = moveCode(c,t2,t1);
+	}
 	$$.code=c.code;
 	$$.type=c.type;
 	$$.head=c.head;
 }
-| id 
+| id
 {
 	Code c=idCode($1);
 	$$.code = c.code;
 	$$.head = c.head;
-	$$.type =c.type;	
+	$$.type =c.type;
 }
-| num 
+| num
 {
 	Number n ={$1.type,$1.val.ival};
 	Code c= numberCode(n);
 	$$.code = c.code;
 	$$.head = c.head;
-	$$.type =c.type;	
+	$$.type =c.type;
 };
 %%

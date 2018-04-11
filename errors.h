@@ -3,7 +3,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 void Warning(const char* s);
-void yyerror(char *s);
+void yyerror(const char *s);
 void ParsingError(const char* s);
 void SemanticError(const char* s);
 

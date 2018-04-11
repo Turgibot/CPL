@@ -3,7 +3,7 @@
 /*struct that hold the symbol*/
 typedef struct symbol {
 	char * name;
-	int type;
+	char type;
 	int constant;
 	int haveVal;
 	char* label;
